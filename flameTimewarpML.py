@@ -94,7 +94,7 @@ class flameAppFramework(object):
         def __contains__(self, k):
             return self.master[self.name].__contains__(k)
 
-        def copy(self): # don't delegate w/ super - dict.copy() -> dict :(
+        def copy(self):  # don't delegate w/ super - dict.copy() -> dict :(
             return type(self)(self)
 
         def keys(self):
@@ -105,7 +105,10 @@ class flameAppFramework(object):
             return self.master[self.name].fromkeys(keys, v)
 
         def __repr__(self):
-            return '{0}({1})'.format(type(self).__name__, self.master[self.name].__repr__())
+            return '{0}({1})'.format(
+                type(self).__name__,
+                self.master[self.name].__repr__()
+            )
 
         def master_keys(self):
             return list(self.master.keys())
@@ -127,7 +130,7 @@ class flameAppFramework(object):
             self.flame = flame
             self.flame_project_name = self.flame.project.current_project.name
             self.flame_user_name = flame.users.current_user.name
-        except:
+        except Exception:
             self.flame = None
             self.flame_project_name = None
             self.flame_user_name = None
@@ -138,9 +141,10 @@ class flameAppFramework(object):
         if sys.platform == 'darwin':
             self.prefs_folder = os.path.join(
                 os.path.expanduser('~'),
-                 'Library',
-                 'Preferences',
-                 self.bundle_name)
+                'Library',
+                'Preferences',
+                self.bundle_name
+            )
         elif sys.platform.startswith('linux'):
             self.prefs_folder = os.path.join(
                 os.path.expanduser('~'),
@@ -160,13 +164,14 @@ class flameAppFramework(object):
         if not self.prefs_global.get('bundle_location'):
             if sys.platform == 'darwin':
                 self.bundle_location = os.path.join(
-                    os.path.expanduser('~'),
-                    'Documents',
-                    self.bundle_name)
+                    '/opt',
+                    self.bundle_name
+                )
             else:
                 self.bundle_location = os.path.join(
-                    os.path.expanduser('~'),
-                    self.bundle_name)
+                    '/opt',
+                    self.bundle_name
+                )
             self.prefs_global['bundle_location'] = self.bundle_location
 
         else:
@@ -196,8 +201,14 @@ class flameAppFramework(object):
             self.bundle_location = os.path.dirname(FLAMETWML_BUNDLE_LINUX)
             return
 
-        if (os.path.isdir(bundle_path) and os.path.isfile(os.path.join(bundle_path, 'bundle_id'))):
-            self.log('checking existing bundle id %s' % os.path.join(bundle_path, 'bundle_id'))
+        if (os.path.isdir(bundle_path) and os.path.isfile(os.path.join(
+            bundle_path,
+            'bundle_id'
+        ))):
+            self.log('checking existing bundle id %s' % os.path.join(
+                bundle_path,
+                'bundle_id'
+            ))
             with open(os.path.join(bundle_path, 'bundle_id'), 'r') as bundle_id_file:
                 if bundle_id_file.read() == self.bundle_id:
                     self.log('env bundle already exists with id matching current version')
@@ -214,32 +225,35 @@ class flameAppFramework(object):
             self.bundle_path = bundle_path
 
             # unpack bundle sequence
-            self.unpacking_thread = threading.Thread(target=self.unpack_bundle, args=(bundle_path, ))
+            self.unpacking_thread = threading.Thread(
+                target=self.unpack_bundle,
+                args=(bundle_path, )
+            )
             self.unpacking_thread.daemon = True
             self.unpacking_thread.start()
         else:
             self.log('user cancelled bundle unpack')
 
-    def log(self, message, logfile = None):
+    def log(self, message, logfile=None):
         msg = '[%s] %s' % (self.bundle_name, message)
-        print (msg)
+        print(msg)
         if logfile:
             try:
                 logfile.write(msg + '\n')
                 logfile.flush()
-            except:
+            except Exception:
                 pass
 
     def log_debug(self, message):
         if self.debug:
-            print ('[DEBUG %s] %s' % (self.bundle_name, message))
+            print('[DEBUG %s] %s' % (self.bundle_name, message))
 
     def load_prefs(self):
         import pickle
 
         prefix = self.prefs_folder + os.path.sep + self.bundle_name
         prefs_file_path = prefix + '.' + self.flame_user_name + '.' + self.flame_project_name + '.prefs'
-        prefs_user_file_path = prefix + '.' + self.flame_user_name  + '.prefs'
+        prefs_user_file_path = prefix + '.' + self.flame_user_name + '.prefs'
         prefs_global_file_path = prefix + '.prefs'
 
         try:
@@ -288,7 +302,7 @@ class flameAppFramework(object):
 
         prefix = self.prefs_folder + os.path.sep + self.bundle_name
         prefs_file_path = prefix + '.' + self.flame_user_name + '.' + self.flame_project_name + '.prefs'
-        prefs_user_file_path = prefix + '.' + self.flame_user_name  + '.prefs'
+        prefs_user_file_path = prefix + '.' + self.flame_user_name + '.prefs'
         prefs_global_file_path = prefix + '.prefs'
 
         try:
@@ -339,7 +353,7 @@ class flameAppFramework(object):
                 script = scriptfile.read()
                 start_position = script.rfind('# bundle payload starts here')
 
-                if script[start_position -1: start_position] != '\n':
+                if script[start_position - 1: start_position] != '\n':
                     self.show_turncated_message()
                     scriptfile.close()
                     return False
@@ -365,7 +379,7 @@ class flameAppFramework(object):
         try:
             open(logfile_path, "w").close()
             logfile = open(logfile_path, 'w+')
-        except:
+        except Exception:
             pass
 
         if sys.platform == 'darwin':
@@ -373,10 +387,10 @@ class flameAppFramework(object):
             log_cmd = """tell application "Terminal" to activate do script "tail -f """ + os.path.abspath(logfile_path) + '; exit"'
             subprocess.Popen(['osascript', '-e', log_cmd])
         elif self.gnome_terminal:
-            log_cmd =  """gnome-terminal --title=flameTimewarpML -- /bin/bash -c 'trap exit SIGINT SIGTERM; tail -f """ + os.path.abspath(logfile_path) +"; sleep 2'"
+            log_cmd = """gnome-terminal --title=flameTimewarpML -- /bin/bash -c 'trap exit SIGINT SIGTERM; tail -f """ + os.path.abspath(logfile_path) + "; sleep 2'"
             os.system(log_cmd)
         else:
-            log_cmd = """konsole --caption flameTimewarpML -e /bin/bash -c 'trap exit SIGINT SIGTERM; tail -f """ + os.path.abspath(logfile_path) +"; sleep 2'"
+            log_cmd = """konsole --caption flameTimewarpML -e /bin/bash -c 'trap exit SIGINT SIGTERM; tail -f """ + os.path.abspath(logfile_path) + "; sleep 2'"
             os.system(log_cmd)
 
         self.log('bundle_id: %s size %sMb' % (self.bundle_id, len(payload)//(1024 ** 2)), logfile)
@@ -451,7 +465,10 @@ class flameAppFramework(object):
 
         delta = time.time() - start
         self.log('bundle extracted to %s' % bundle_path, logfile)
-        self.log('extracting bundle took %s sec' % '{:.1f}'.format(delta), logfile)
+        self.log(
+            'extracting bundle took %s sec' % '{:.1f}'.format(delta),
+            logfile
+        )
 
         del payload
 
@@ -474,19 +491,26 @@ class flameAppFramework(object):
         if self.install_miniconda_libs:
             self.log('flameTimewarpML has finished unpacking its bundle and installing required packages', logfile)
         else:
-            self.log('flameTimewarpML has finished unpacking its bundle', logfile)
+            self.log(
+                'flameTimewarpML has finished unpacking its bundle',
+                logfile
+            )
 
         try:
             logfile.close()
             os.system('killall tail')
-        except:
+        except Exception:
             pass
 
         if self.show_complete_message(env_folder):
             # BUNDLE CLEANUP LOGIC
             self.log('cleaning up %s' % payload_dest, logfile)
             os.remove(payload_dest)
-            cmd = 'rm -rf "' + os.path.join(self.bundle_location, 'bundle', 'miniconda.package') + '"'
+            cmd = 'rm -rf "' + os.path.join(
+                self.bundle_location,
+                'bundle',
+                'miniconda.package'
+            ) + '"'
             self.log('Executing command: %s' % cmd, logfile)
             os.system(cmd)
             try:
@@ -494,7 +518,7 @@ class flameAppFramework(object):
                     script = scriptfile.read()
                     start_position = script.rfind('# bundle payload starts here')
 
-                    if script[start_position -1: start_position] == '\n':
+                    if script[start_position - 1: start_position] == '\n':
                         start_position += 33
                         self.log('removing bundle from script file')
                         scriptfile.truncate(start_position - 34)
@@ -568,9 +592,9 @@ class flameAppFramework(object):
 
         try:
             import flame
-        except:
-            print (msg)
-            print (dmsg)
+        except Exception:
+            print(msg)
+            print(dmsg)
             return False
 
         def show_error_mbox():
@@ -634,7 +658,10 @@ class flameAppFramework(object):
         chk_InstallMinicondaLibs.setFocusPolicy(QtCore.Qt.NoFocus)
         chk_InstallMinicondaLibs.setCheckState(QtCore.Qt.Checked)
         chk_InstallMinicondaLibs.stateChanged.connect(toggle_install_miniconda)
-        vbox.addWidget(chk_InstallMinicondaLibs, alignment = QtCore.Qt.AlignCenter)
+        vbox.addWidget(
+            chk_InstallMinicondaLibs,
+            alignment=QtCore.Qt.AlignCenter
+        )
 
         # Spaces in Path label
         lbl_SpacesInPath = QtWidgets.QLabel(
@@ -666,7 +693,7 @@ class flameAppFramework(object):
                 self.bundle_location,
                 QtWidgets.QFileDialog.ShowDirsOnly))
 
-            if result_folder =='':
+            if result_folder == '':
                 return
 
             if ' ' in result_folder:
@@ -741,9 +768,9 @@ class flameAppFramework(object):
 
         try:
             import flame
-        except:
-            print (msg)
-            print (dmsg)
+        except Exception:
+            print(msg)
+            print(dmsg)
             return status
 
         def show_mbox():
@@ -752,7 +779,7 @@ class flameAppFramework(object):
             mbox.setText(msg)
             mbox.setDetailedText(dmsg)
             # mbox.setStyleSheet('QLabel{min-width: 400px;}')
-            mbox.setStandardButtons(QtWidgets.QMessageBox.Ok|QtWidgets.QMessageBox.Cancel)
+            mbox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
             btn_Clean = mbox.button(QtWidgets.QMessageBox.Cancel)
             btn_Clean.setText('Clean')
@@ -787,9 +814,9 @@ class flameAppFramework(object):
 
         try:
             import flame
-        except:
-            print (msg)
-            print (dmsg)
+        except Exception:
+            print(msg)
+            print(dmsg)
             return False
 
         def show_mbox():
@@ -813,9 +840,9 @@ class flameAppFramework(object):
 
         try:
             import flame
-        except:
-            print (msg)
-            print (dmsg)
+        except Exception:
+            print(msg)
+            print(dmsg)
             return False
 
         def show_mbox():
@@ -830,14 +857,14 @@ class flameAppFramework(object):
         flame.schedule_idle_event(show_mbox)
         return True
 
-    def show_error_msg(self, msg, dmsg = ''):
+    def show_error_msg(self, msg, dmsg=''):
         from PySide2 import QtWidgets
 
         try:
             import flame
-        except:
-            print (msg)
-            print (dmsg)
+        except Exception:
+            print(msg)
+            print(dmsg)
             return False
 
         def show_error_mbox():
@@ -866,12 +893,18 @@ class flameMenuApp(object):
         try:
             import flame
             self.flame = flame
-        except:
+        except Exception:
             self.flame = None
 
         self.prefs = self.framework.prefs_dict(self.framework.prefs, self.name)
-        self.prefs_user = self.framework.prefs_dict(self.framework.prefs_user, self.name)
-        self.prefs_global = self.framework.prefs_dict(self.framework.prefs_global, self.name)
+        self.prefs_user = self.framework.prefs_dict(
+            self.framework.prefs_user,
+            self.name
+        )
+        self.prefs_global = self.framework.prefs_dict(
+            self.framework.prefs_global,
+            self.name
+        )
 
         from PySide2 import QtWidgets
         self.mbox = QtWidgets.QMessageBox()
@@ -899,7 +932,7 @@ class flameMenuApp(object):
 
     def __getattr__(self, name):
         def method(*args, **kwargs):
-            print ('calling %s' % name)
+            print('calling %s' % name)
         return method
 
     def log(self, message):
@@ -910,7 +943,7 @@ class flameMenuApp(object):
             try:
                 import flame
                 self.flame = flame
-            except:
+            except Exception:
                 self.flame = None
 
         if self.flame:
@@ -1086,7 +1119,6 @@ class flameTimewarpML(flameMenuApp):
             self.prefs['fluidmorph_uhd'] = True
             self.prefs['fltw_uhd'] = True
 
-
         if (self.prefs.get('version') != __version__) or not os.path.isdir(str(self.prefs.get('trained_models_folder', ''))):
             # set version-specific defaults
             self.prefs['trained_models_folder'] = os.path.join(
@@ -1213,7 +1245,7 @@ class flameTimewarpML(flameMenuApp):
                     mbox = QtWidgets.QMessageBox()
                     mbox.setWindowTitle('flameTimewrarpML')
                     mbox.setText(msg)
-                    mbox.setStandardButtons(QtWidgets.QMessageBox.Ok|QtWidgets.QMessageBox.Cancel)
+                    mbox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
                     mbox.setStyleSheet('QLabel{min-width: 400px;}')
                     btn_Continue = mbox.button(QtWidgets.QMessageBox.Ok)
                     btn_Continue.setText('Owerwrite')
@@ -1253,7 +1285,7 @@ class flameTimewarpML(flameMenuApp):
             cmd_prefix = """tell application "Terminal" to activate do script "clear; """
             # cmd_prefix += """ echo " & quote & "Received """
             # cmd_prefix += str(number_of_clips)
-            #cmd_prefix += ' clip ' if number_of_clips < 2 else ' clips '
+            # cmd_prefix += ' clip ' if number_of_clips < 2 else ' clips '
             # cmd_prefix += 'to process, press Ctrl+C to cancel" & quote &; '
             cmd_prefix += """/bin/bash -c 'eval " & quote & "$("""
             cmd_prefix += os.path.join(self.env_folder, 'bin', 'conda')
@@ -1286,7 +1318,7 @@ class flameTimewarpML(flameMenuApp):
                 ml_cmd += cmd_string
             if hold_konsole:
                 ml_cmd += 'echo "Commands finished. You can close this window"; sleep infinity'
-            ml_cmd +="'"
+            ml_cmd += "'"
             self.log('Executing command: %s' % ml_cmd)
             os.system(ml_cmd)
 
@@ -1308,7 +1340,7 @@ class flameTimewarpML(flameMenuApp):
 
             if hold_konsole:
                 ml_cmd += 'echo "Commands finished. You can close this window"'
-            ml_cmd +="'"
+            ml_cmd += "'"
             self.log('Executing command: %s' % ml_cmd)
             os.system(ml_cmd)
 
@@ -1349,7 +1381,6 @@ class flameTimewarpML(flameMenuApp):
         lbl_Spacer.setMinimumHeight(4)
         lbl_Spacer.setMaximumHeight(4)
         lbl_Spacer.setAlignment(QtCore.Qt.AlignCenter)
-
 
         vbox = QtWidgets.QVBoxLayout()
         vbox.setAlignment(QtCore.Qt.AlignTop)
